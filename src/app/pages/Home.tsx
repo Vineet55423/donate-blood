@@ -17,18 +17,61 @@ export default function Home() {
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
   const [location, setLocation] = useState("");
   const [filteredDonors, setFilteredDonors] = useState<any[]>([]);
+  // Added state to track if we are currently fetching GPS
+  const [isLocating, setIsLocating] = useState(false);
 
   const loadDonors = async () => {
-    const { data } = await supabase
-      .from("donors")
-      .select("*");
-
+    const { data } = await supabase.from("donors").select("*");
     if (data) {
       setFilteredDonors(data);
     }
   };
 
+  // Added function to handle GPS to City Name conversion
+  const fetchAutoLocation = () => {
+    if (!navigator.geolocation) {
+      console.warn("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Reverse geocoding via OpenStreetMap (Free, no API key needed)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+
+          const currentCity = 
+            data.address.city || 
+            data.address.town || 
+            data.address.village || 
+            data.address.state_district;
+
+          if (currentCity) {
+            setLocation(currentCity);
+          }
+        } catch (error) {
+          console.error("Error reverse geocoding:", error);
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error("Error getting location:", error.message);
+        setIsLocating(false);
+      }
+    );
+  };
+
   useEffect(() => {
+    // Automatically try to get location when page loads
+    fetchAutoLocation();
 
     loadDonors();   // 👈 add this
 
@@ -47,11 +90,9 @@ export default function Home() {
     return () => {
       supabase.removeChannel(channel);
     };
-
   }, []);
 
   const handleSearch = async () => {
-
     let query = supabase
       .from("donors")
       .select("*")
@@ -72,7 +113,6 @@ export default function Home() {
     }
 
     setFilteredDonors(data ?? []);
-
   };
 
   return (
@@ -144,7 +184,8 @@ export default function Home() {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Enter city or state"
+                  // Changed the placeholder slightly to indicate it might be thinking
+                  placeholder={isLocating ? "Locating you..." : "Enter city or state"}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
