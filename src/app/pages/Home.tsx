@@ -30,6 +30,8 @@ export default function Home() {
 
   useEffect(() => {
 
+    loadDonors();   // 👈 add this
+
     const channel = supabase
       .channel("donors-changes")
       .on(
@@ -37,7 +39,7 @@ export default function Home() {
         { event: "*", schema: "public", table: "donors" },
         (payload) => {
           console.log("Change received:", payload);
-          loadDonors(); 
+          loadDonors();
         }
       )
       .subscribe();
@@ -53,7 +55,6 @@ export default function Home() {
     let query = supabase
       .from("donors")
       .select("*")
-      .ilike("city", `%${location}%`);
 
     if (selectedBloodGroup && selectedBloodGroup !== "Select Blood Group") {
       query = query.eq("bloodGroup", selectedBloodGroup);
