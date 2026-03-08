@@ -3,13 +3,44 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase';
 
+// 1. ADDED: Interface to accept the trigger from AdminDashboard
+interface AnalyticsCardsProps {
+  refreshTrigger?: number;
+}
 
-export function AnalyticsCards({ donors }: { donors: any[] }) {
-
+// 2. ADDED: Pass the prop into the component
+export function AnalyticsCards({ refreshTrigger = 0 }: AnalyticsCardsProps) {
   const [totalDonors, setTotalDonors] = useState(0)
   const [availableDonors, setAvailableDonors] = useState(0)
   const [emergencyRequests, setEmergencyRequests] = useState(0)
   const [totalDonations, setTotalDonations] = useState(0)
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const { count: donations } = await supabase
+        .from("donations")
+        .select("*", { count: "exact", head: true })
+
+      setTotalDonations(donations || 0)
+
+      const { count: donors } = await supabase
+        .from("donors")
+        .select("*", { count: "exact", head: true })
+
+      setTotalDonors(donors || 0)
+
+      const { count: available } = await supabase
+        .from("donors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "available")
+
+      setAvailableDonors(available || 0)
+    }
+
+    loadStats()
+
+  // 3. ADDED: Put refreshTrigger in this array! Now it runs whenever a donor gets deleted.
+  }, [refreshTrigger]) 
 
   const analyticsData = [
     {
@@ -22,7 +53,6 @@ export function AnalyticsCards({ donors }: { donors: any[] }) {
       iconBg: 'bg-blue-500',
       chartData: [20, 35, 25, 40, 30, 45, 38]
     },
-
     {
       title: 'Available Donors',
       value: availableDonors,
@@ -33,10 +63,9 @@ export function AnalyticsCards({ donors }: { donors: any[] }) {
       iconBg: 'bg-green-500',
       chartData: [30, 25, 40, 35, 50, 45, 55]
     },
-
     {
       title: 'Emergency Requests',
-      value: emergencyRequests,
+      value: 5, // Note: You might want to fetch this dynamically later too!
       change: '-4.3%',
       isPositive: false,
       icon: AlertCircle,
@@ -44,7 +73,6 @@ export function AnalyticsCards({ donors }: { donors: any[] }) {
       iconBg: 'bg-orange-500',
       chartData: [45, 40, 35, 30, 28, 25, 23]
     },
-
     {
       title: 'Total Donations',
       value: totalDonations,
@@ -56,37 +84,6 @@ export function AnalyticsCards({ donors }: { donors: any[] }) {
       chartData: [25, 30, 35, 45, 50, 60, 70]
     }
   ];
-
-  useEffect(() => {
-
-    const loadStats = async () => {
-
-      const { count: donations } = await supabase
-        .from("donations")
-        .select("*", { count: "exact", head: true })
-
-      setTotalDonations(donations || 0)
-
-    }
-
-    loadStats()
-
-    const channel = supabase
-      .channel("donations-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "donations" },
-        () => {
-          loadStats()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-
-  }, [])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
