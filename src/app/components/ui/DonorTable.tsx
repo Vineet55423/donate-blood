@@ -1,18 +1,4 @@
-// import { Search, Filter, Trash2 } from "lucide-react";
-// import { motion } from "framer-motion";
-// import { useState, useEffect } from "react";
-// import { supabase } from "@/lib/supabase";
-
-// // 1. THIS IS THE CRITICAL PART FOR THAT SPECIFIC ERROR
-// interface DonorTableProps {
-//   onDonorDeleted: () => void;
-// }
-
-// // 2. Make sure it's being passed into the function here
-// export function DonorTable({ onDonorDeleted }: DonorTableProps) {
-//   // ... rest of your code (searchQuery, filterStatus, etc.)
-
-import { Search, Filter, Trash2 } from "lucide-react"; // Removed Edit import
+import { Search, Filter, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -21,7 +7,6 @@ interface DonorTableProps {
   onDonorDeleted: () => void;
 }
 
-// export function DonorTable() {
 export function DonorTable({ onDonorDeleted }: DonorTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -41,8 +26,8 @@ export function DonorTable({ onDonorDeleted }: DonorTableProps) {
     loadDonors();
   }, []);
 
-  // NEW: Delete handler function
- const handleDelete = async (id: any) => {
+
+  const handleDelete = async (id: any) => {
     const isConfirmed = window.confirm("Are you sure you want to delete this donor?");
     if (!isConfirmed) return;
 
@@ -64,7 +49,7 @@ export function DonorTable({ onDonorDeleted }: DonorTableProps) {
 
   const filteredDonors = donorsData.filter((donor) => {
     const matchesSearch =
-      donor.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      donor.fullname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       donor.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       donor.bloodgroup?.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -148,10 +133,10 @@ export function DonorTable({ onDonorDeleted }: DonorTableProps) {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#c0392b] to-[#e74c3c] rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                      {donor.fullName?.charAt(0)}
+                      {donor.fullname?.charAt(0)}
                     </div>
                     <span className="font-medium text-[#2c3e50] dark:text-white">
-                      {donor.fullName}
+                      {donor.fullname}
                     </span>
                   </div>
                 </td>
