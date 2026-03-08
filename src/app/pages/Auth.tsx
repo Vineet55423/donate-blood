@@ -1,13 +1,15 @@
+// pages/auth.tsx
 import { useState } from "react";
 import { motion } from "motion/react";
 import { Mail, Phone, ArrowRight, Droplet } from "lucide-react";
-import OTPVerification from "../components/OTPVerification";
+import VerifyEmail from "../components/VerifyEmail"; // Changed import
+import OTPVerification from "../components/OTPVerification"; // Keep if still using Phone OTP
 import { supabase } from "@/lib/supabase";
 
 export default function Auth() {
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [contact, setContact] = useState("");
-  const [showOTP, setShowOTP] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +35,10 @@ export default function Auth() {
       if (authMethod === "email") {
         const { error } = await supabase.auth.signInWithOtp({
           email: contact,
+          options: {
+            // This tells Supabase where to redirect after clicking the magic link
+            emailRedirectTo: `${window.location.origin}/signup`,
+          },
         });
 
         if (error) throw error;
@@ -46,14 +52,19 @@ export default function Auth() {
         if (error) throw error;
       }
 
-      setShowOTP(true);
+      setShowVerification(true);
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  if (showOTP) {
-    return <OTPVerification contact={contact} authMethod={authMethod} />;
+  if (showVerification) {
+    // Show Email Magic Link UI or Phone OTP UI based on selection
+    return authMethod === "email" ? (
+      <VerifyEmail email={contact} />
+    ) : (
+      <OTPVerification contact={contact} authMethod="phone" />
+    );
   }
 
   return (
@@ -82,20 +93,22 @@ export default function Auth() {
           <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setAuthMethod("email")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === "email"
-                ? "bg-white text-red-600 shadow"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                authMethod === "email"
+                  ? "bg-white text-red-600 shadow"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
             >
               <Mail className="w-4 h-4 inline mr-2" />
               Email
             </button>
             <button
               onClick={() => setAuthMethod("phone")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === "phone"
-                ? "bg-white text-red-600 shadow"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                authMethod === "phone"
+                  ? "bg-white text-red-600 shadow"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
             >
               <Phone className="w-4 h-4 inline mr-2" />
               Phone
@@ -135,7 +148,7 @@ export default function Auth() {
               type="submit"
               className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
-              Send OTP
+              {authMethod === "email" ? "Send Magic Link" : "Send OTP"}
               <ArrowRight className="w-5 h-5" />
             </button>
           </form>
@@ -150,7 +163,7 @@ export default function Auth() {
         {/* Info */}
         <div className="mt-6 bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
           <p className="text-sm text-blue-800">
-            <strong>New here?</strong> After OTP verification, you'll be directed
+            <strong>New here?</strong> After verification, you'll be directed
             to complete your registration form.
           </p>
         </div>

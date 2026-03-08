@@ -3,17 +3,13 @@ import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
-const monthlyData = [
-  { month: 'Jan', donations: 420 },
-  { month: 'Feb', donations: 380 },
-  { month: 'Mar', donations: 520 },
-  { month: 'Apr', donations: 460 },
-  { month: 'May', donations: 590 },
-  { month: 'Jun', donations: 640 },
-  { month: 'Jul', donations: 710 },
-]
+// 1. ADDED: Interface to accept the trigger from AdminDashboard
+interface ChartsSectionProps {
+  refreshTrigger?: number;
+}
 
-export function ChartsSection() {
+// 2. ADDED: Pass the prop into the component
+export function ChartsSection({ refreshTrigger = 0 }: ChartsSectionProps) {
 
   const [bloodData, setBloodData] = useState([])
   const [monthlyData, setMonthlyData] = useState<any[]>([])
@@ -75,7 +71,8 @@ export function ChartsSection() {
     loadBloodData()
     loadMonthlyData()
 
-  }, [])
+  // 3. ADDED: Put refreshTrigger in this array! 
+  }, [refreshTrigger])
 
   const getColor = (group: any) => {
     const colors: any = {

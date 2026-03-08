@@ -3,64 +3,20 @@ import { motion } from 'motion/react';
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase';
 
+// 1. ADDED: Interface to accept the trigger from AdminDashboard
+interface AnalyticsCardsProps {
+  refreshTrigger?: number;
+}
 
-export function AnalyticsCards() {
-
+// 2. ADDED: Pass the prop into the component
+export function AnalyticsCards({ refreshTrigger = 0 }: AnalyticsCardsProps) {
   const [totalDonors, setTotalDonors] = useState(0)
   const [availableDonors, setAvailableDonors] = useState(0)
   const [emergencyRequests, setEmergencyRequests] = useState(0)
   const [totalDonations, setTotalDonations] = useState(0)
 
-  const analyticsData = [
-    {
-      title: 'Total Donors',
-      value: totalDonors,
-      change: '+12.5%',
-      isPositive: true,
-      icon: Users,
-      gradient: 'from-blue-500/10 to-blue-600/10',
-      iconBg: 'bg-blue-500',
-      chartData: [20, 35, 25, 40, 30, 45, 38]
-    },
-
-    {
-      title: 'Available Donors',
-      value: availableDonors,
-      change: '+8.2%',
-      isPositive: true,
-      icon: UserCheck,
-      gradient: 'from-green-500/10 to-green-600/10',
-      iconBg: 'bg-green-500',
-      chartData: [30, 25, 40, 35, 50, 45, 55]
-    },
-
-    {
-      title: 'Emergency Requests',
-      value: 5,
-      change: '-4.3%',
-      isPositive: false,
-      icon: AlertCircle,
-      gradient: 'from-orange-500/10 to-orange-600/10',
-      iconBg: 'bg-orange-500',
-      chartData: [45, 40, 35, 30, 28, 25, 23]
-    },
-
-    {
-      title: 'Total Donations',
-      value: totalDonations,
-      change: '+15.8%',
-      isPositive: true,
-      icon: Droplet,
-      gradient: 'from-red-500/10 to-red-600/10',
-      iconBg: 'bg-red-500',
-      chartData: [25, 30, 35, 45, 50, 60, 70]
-    }
-  ];
-
   useEffect(() => {
-
     const loadStats = async () => {
-
       const { count: donations } = await supabase
         .from("donations")
         .select("*", { count: "exact", head: true })
@@ -79,12 +35,55 @@ export function AnalyticsCards() {
         .eq("status", "available")
 
       setAvailableDonors(available || 0)
-
     }
 
     loadStats()
 
-  }, [])
+  // 3. ADDED: Put refreshTrigger in this array! Now it runs whenever a donor gets deleted.
+  }, [refreshTrigger]) 
+
+  const analyticsData = [
+    {
+      title: 'Total Donors',
+      value: totalDonors,
+      change: '+12.5%',
+      isPositive: true,
+      icon: Users,
+      gradient: 'from-blue-500/10 to-blue-600/10',
+      iconBg: 'bg-blue-500',
+      chartData: [20, 35, 25, 40, 30, 45, 38]
+    },
+    {
+      title: 'Available Donors',
+      value: availableDonors,
+      change: '+8.2%',
+      isPositive: true,
+      icon: UserCheck,
+      gradient: 'from-green-500/10 to-green-600/10',
+      iconBg: 'bg-green-500',
+      chartData: [30, 25, 40, 35, 50, 45, 55]
+    },
+    {
+      title: 'Emergency Requests',
+      value: 5, // Note: You might want to fetch this dynamically later too!
+      change: '-4.3%',
+      isPositive: false,
+      icon: AlertCircle,
+      gradient: 'from-orange-500/10 to-orange-600/10',
+      iconBg: 'bg-orange-500',
+      chartData: [45, 40, 35, 30, 28, 25, 23]
+    },
+    {
+      title: 'Total Donations',
+      value: totalDonations,
+      change: '+15.8%',
+      isPositive: true,
+      icon: Droplet,
+      gradient: 'from-red-500/10 to-red-600/10',
+      iconBg: 'bg-red-500',
+      chartData: [25, 30, 35, 45, 50, 60, 70]
+    }
+  ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
