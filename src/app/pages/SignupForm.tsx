@@ -3,16 +3,19 @@ import { motion } from "motion/react";
 import { useNavigate, useLocation } from "react-router";
 import { User, MapPin, Heart, Building2 } from "lucide-react";
 import { bloodGroups } from "../utils/mockData";
-import { supabase } from "../../lib/supabase"
+import { supabase } from "../../lib/supabase";
 
 export default function SignupForm() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // We still keep this for Phone OTP users who navigate normally
   const { contact, authMethod } = (location.state as {
     contact: string;
     authMethod: "email" | "phone";
   }) || {};
 
+  const [isVerifying, setIsVerifying] = useState(true); // Added loading state
   const [userType, setUserType] = useState<"donor" | "beneficiary">("donor");
   const [allowLocation, setAllowLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{
@@ -43,6 +46,46 @@ export default function SignupForm() {
     relationship: "",
     hospitalName: "",
   });
+
+  // NEW: Listen for Supabase Authentication
+  useEffect(() => {
+    const checkSession = async () => {
+      // Check if there is already an active session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Automatically populate the email from Supabase
+        setFormData((prev) => ({
+          ...prev,
+          email: session.user.email || prev.email,
+          phone: session.user.phone || prev.phone,
+        }));
+        setIsVerifying(false);
+      } else if (!contact) {
+        // ONLY kick them out if there is NO session AND NO router state
+        navigate("/auth");
+      } else {
+        // Let Phone OTP users through
+        setIsVerifying(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for the exact moment the magic link URL hash is verified
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setFormData((prev) => ({
+          ...prev,
+          email: session.user.email || prev.email,
+          phone: session.user.phone || prev.phone,
+        }));
+        setIsVerifying(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, contact]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -104,9 +147,16 @@ export default function SignupForm() {
     });
   };
   
-  if (!contact) {
-    navigate("/auth");
-    return null;
+  // NEW: Show a loading screen while Supabase reads the Magic Link
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">Verifying your secure link...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -355,7 +405,7 @@ export default function SignupForm() {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
                     required
-                    readOnly
+                    readOnly={authMethod === "phone"}
                   />
                 </div>
 
@@ -383,7 +433,7 @@ export default function SignupForm() {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
                     required
-                    readOnly
+                    readOnly={authMethod === "email"}
                   />
                 </div>
               </div>
