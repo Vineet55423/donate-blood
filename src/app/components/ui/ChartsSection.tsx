@@ -3,29 +3,22 @@ import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
-const monthlyData = [
-  { month: 'Jan', donations: 420 },
-  { month: 'Feb', donations: 380 },
-  { month: 'Mar', donations: 520 },
-  { month: 'Apr', donations: 460 },
-  { month: 'May', donations: 590 },
-  { month: 'Jun', donations: 640 },
-  { month: 'Jul', donations: 710 },
-]
+// 1. ADDED: Interface to accept the trigger from AdminDashboard
+interface ChartsSectionProps {
+  refreshTrigger?: number;
+}
 
-export function ChartsSection({ donors }: { donors: any[] }) {
+// 2. ADDED: Pass the prop into the component
+export function ChartsSection({ refreshTrigger = 0 }: ChartsSectionProps) {
 
-  const [bloodData, setBloodData] = useState<any[]>([])
+  const [bloodData, setBloodData] = useState([])
   const [monthlyData, setMonthlyData] = useState<any[]>([])
 
-  useEffect(() => {
+  const loadMonthlyData = async () => {
 
-    if (!donors || donors.length === 0) return
-
-    const groups: any = {}
-
-    // MONTHLY DATA
-    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const { data } = await supabase
+      .from("donors")
+      .select("created_at")
 
     const months: any = {
       Jan: 0, Feb: 0, Mar: 0, Apr: 0,
@@ -33,50 +26,53 @@ export function ChartsSection({ donors }: { donors: any[] }) {
       Sep: 0, Oct: 0, Nov: 0, Dec: 0
     }
 
-    const currentYear = new Date().getFullYear()
-
-    donors.forEach((d: any) => {
-
-      if (!d.created_at) return
+    data?.forEach((d: any) => {
 
       const date = new Date(d.created_at)
+      const month = date.toLocaleString("default", { month: "short" })
 
-      // ignore old records from previous years
-      if (date.getFullYear() !== currentYear) return
-
-      const monthIndex = date.getMonth()
-      const month = monthOrder[monthIndex]
-
-      months[month]++
+      if (months[month] !== undefined) {
+        months[month]++
+      }
 
     })
 
-    const chartData = monthOrder.map((m) => ({
+    const chartData = Object.keys(months).map((m) => ({
       month: m,
       donations: months[m]
     }))
 
     setMonthlyData(chartData)
+  }
 
-    // BLOOD GROUP DATA
-    donors.forEach((d: any) => {
+  useEffect(() => {
 
-      const group = d.bloodgroup
-      if (!group) return
+    const loadBloodData = async () => {
 
-      groups[group] = (groups[group] || 0) + 1
+      const { data } = await supabase
+        .from("donors")
+        .select("bloodgroup")
 
-    })
+      const counts: any = {}
 
-    const pieData: any[] = Object.keys(groups).map((g) => ({
-      name: g,
-      value: groups[g],
-      color: getColor(g)
-    }))
+      data?.forEach((d) => {
+        counts[d.bloodgroup] = (counts[d.bloodgroup] || 0) + 1
+      })
 
-    setBloodData(pieData)
+      const chartData: any = Object.keys(counts).map((group: any) => ({
+        name: group,
+        value: counts[group],
+        color: getColor(group)
+      }))
 
-  }, [donors])
+      setBloodData(chartData)
+    }
+
+    loadBloodData()
+    loadMonthlyData()
+
+  // 3. ADDED: Put refreshTrigger in this array! 
+  }, [refreshTrigger])
 
   const getColor = (group: any) => {
     const colors: any = {

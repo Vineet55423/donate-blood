@@ -9,7 +9,8 @@ import SignupForm from "./pages/SignupForm";
 import EligibilityCheck from "./pages/EligibilityCheck";
 import NotFound from "./pages/NotFound";
 import Education from "../app/pages/Education";
-import AdminDashboard from "./pages/AdminDashboard";
+// import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "../app/pages/AdminDashboard";
 
 export const router = createBrowserRouter([
   {
