@@ -1,5 +1,14 @@
 # FindBlood - Blood Donation Platform
 
+Demo link 
+<br>
+https://drive.google.com/file/d/1_AZMkfJf065Wgbcaw9zRXtIAYWXKr--6/view?usp=drivesdk
+
+<br>
+Pitch link
+<br>
+https://drive.google.com/file/d/19wPIxhWGCii-42oCEVRidUrUdXWUhDCG/view?usp=drivesdk
+
 A comprehensive blood donation platform built with React, TypeScript, Tailwind CSS, and Motion (Framer Motion). This platform connects blood donors with those in need, featuring user registration, OTP verification, donor search, and blood bank locator.
 
 ## Features
