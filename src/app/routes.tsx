@@ -11,12 +11,17 @@ import NotFound from "./pages/NotFound";
 import Education from "../app/pages/Education";
 // import AdminDashboard from "./pages/AdminDashboard";
 import AdminDashboard from "../app/pages/AdminDashboard";
+// Add this import near your others at the top
+import AdminLogin from "./pages/AdminLogin";
+
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: Root,
     children: [
+      // Inside your children array, add this new route:
+      { path: "admin-login", Component: AdminLogin },
       { index: true, Component: Home },
       { path: "become-donor", Component: BecomeDonor },
       { path: "blood-compatibility", Component: BloodCompatibility },
